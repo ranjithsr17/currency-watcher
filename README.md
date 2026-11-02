@@ -123,3 +123,33 @@ go test -race ./...   # needs CGO_ENABLED=1 and a C compiler such as gcc
 On a machine with little free memory, `go test ./...` can crash the Go compiler. Limit the parallel builds with `go test -p 1 ./...`, and set the `GOMAXPROCS` environment variable to `2`.
 
 On Windows, antivirus can briefly lock the test binary and cause an `unlinkat ... being used by another process` error after the tests have passed. Run the command again.
+
+## Docker
+
+Build the backend Docker image:
+docker build -t currency-watcher-api:local ./backend
+
+Run the container:
+docker run --rm -p 8080:8080 currency-watcher-api:local
+
+Health check: http://localhost:8080/api/health
+
+The Dockerfile uses a multi-stage build with a minimal Distroless runtime image.
+
+## Terraform and AWS Infrastructure
+
+The terraform directory provisions configuration for VPC, public subnets, ECR, ECS Fargate, Application Load Balancer, IAM and CloudWatch.
+
+Validate Terraform:
+terraform -chdir=terraform init -backend=false
+terraform -chdir=terraform validate
+
+AWS infrastructure has not yet been deployed. Review costs before running terraform apply.
+
+## GitHub Actions CI/CD
+
+The workflow is located at .github/workflows/deploy.yml.
+
+The CI pipeline checks Go formatting, runs Go vet and tests, installs frontend dependencies, builds React and builds the Docker image.
+
+The AWS deployment job is disabled by default. Enabling it requires AWS infrastructure, GitHub OIDC configuration and repository variables: AWS_DEPLOY_ENABLED, AWS_ROLE_ARN, AWS_REGION, ECR_REPOSITORY, ECS_CLUSTER and ECS_SERVICE.
